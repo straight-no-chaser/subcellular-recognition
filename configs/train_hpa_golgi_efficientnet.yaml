@@ -1,0 +1,48 @@
+experiment:
+  name: train_hpa_golgi_efficientnet
+  output_root: results
+  seed: 42
+
+data:
+  manifest_paths:
+    - data/metadata/hpa_patches.csv
+  source:
+    - hpa
+  target_organelle: golgi
+  image_size: 128
+  input_channels: 1
+  crop_mode: center
+  normalize_mode: percentile
+  percentile_low: 1.0
+  percentile_high: 99.0
+  exclude_quality_flags:
+    - low_signal
+  split:
+    use_predefined: false
+    group_col: acquisition_batch
+    seed: 42
+    train_frac: 0.7
+    val_frac: 0.15
+    test_frac: 0.15
+
+loader:
+  batch_size: 48
+  num_workers: 0
+
+model:
+  arch: efficientnet_b0
+  in_channels: 1
+  pretrained: false
+
+train:
+  epochs: 24
+  lr: 0.0002
+  weight_decay: 0.0001
+  pos_weight: auto
+  threshold: 0.5
+  scheduler:
+    name: plateau
+    factor: 0.5
+    patience: 2
+    min_lr: 0.000001
+  resume_ckpt:

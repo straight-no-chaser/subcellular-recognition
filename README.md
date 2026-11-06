@@ -1,30 +1,45 @@
-# Cross organelle generalization with CNNs
+# Cross-organelle transfer in fluorescence microscopy
 
-Train and maintain a small suite of lab-internal pretrained CNN models for fluorescence microscopy, used to automatically recognize subcellular organelles from image patches. This repository supports routine dataset curation + training + evaluation for organelle-specific binary classifiers, and tests cross-organelle generalization to understand robustness and failure modes.
+Organelle-specific binary classification assessing transferability, cross-dataset shift, robustness, and failure analysis on Human Protein Atlas (HPA) and Allen Cell Explorer style manifests, with optional BBBC or Cell Painting support through the same metadata layer.
 
-## Description
-- Models: organelle-specific binary CNN classifiers (ResNet18, VGG16, DenseNet121, EfficientNet-B0)
-- Input: 128×128 fluorescence microscopy patches
-- Tasks:
-  - Train per-organelle classifiers and save reusable pretrained checkpoints for downstream lab workflows
-  - Evaluate cross-organelle transfer/generalization and qualitative error inspection including hard negatives, bleed-through and low SNR
-
-## Setup
-
-### Dependencies
-- Python 3.9+
-- torchvision
-- numpy / opencv-python / scikit-learn (for I/O + metrics)
-
-### Quickstart
-`main.py` is the entry point and a typical workflow is:
+## Train
 
 ```bash
-python main.py --mode train --organelle mito --arch resnet18 --patch_size 128 --data_root data/ --save_ckpt ckpts/mito_resnet18.pt
-python main.py --mode eval  --ckpt ckpts/mito_resnet18.pt --test_organelle golgi --data_root data/ --n_vis 64
-python main.py --mode sweep --train_organelle mito --test_organelles mito golgi er nucleus --archs resnet18 vgg16 densenet121 efficientnet_b0 --out results/sweep.json
+python scripts/train.py --config configs/train_hpa_mito_resnet18.yaml
+python scripts/train.py --config configs/train_hpa_golgi_efficientnet.yaml
 ```
 
-## Notes
-- This repo is intended for internal research and model maintenance in our lab, not as a polished benchmark.
+## Evaluation
 
+```bash
+python scripts/eval.py --config configs/eval_allen_mito.yaml --ckpt results/train_hpa_mito_resnet18_YYYYMMDD_HHMMSS/best.pt
+python scripts/eval.py --config configs/eval_allen_mito.yaml --ckpt results/train_hpa_mito_resnet18_YYYYMMDD_HHMMSS/best.pt --target_organelle golgi
+```
+
+## Transfer Analysis Workflow
+
+Consumes one or more trained checkpoints and evaluates each model across a panel of organelles, optionally across multiple data sources.
+
+```bash
+python scripts/transfer_sweep.py --config configs/transfer_hpa_panel.yaml
+```
+
+## Robustness Workflow
+
+Evaluation-time corruptions with perturbations:
+
+- gaussian noise
+- blur
+- intensity shift
+- channel dropout
+- bleed-through-like channel mixing
+
+```bash
+python scripts/robustness_eval.py --config configs/eval_corruptions_hpa_mito.yaml --ckpt results/train_hpa_mito_resnet18_YYYYMMDD_HHMMSS/best.pt
+```
+
+## Failure Analysis
+
+```bash
+python scripts/failure_analysis.py --pred_csv results/eval_allen_mito_YYYYMMDD_HHMMSS/predictions.csv
+```

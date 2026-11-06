@@ -1,0 +1,36 @@
+experiment:
+  name: eval_allen_mito
+  output_root: results
+  seed: 42
+
+data:
+  manifest_paths:
+    - data/metadata/hpa_patches.csv
+    - data/metadata/allen_cell_patches.csv
+  source:
+    - allen_cell
+  target_organelle: mito
+  image_size: 128
+  input_channels: 1
+  crop_mode: center
+  normalize_mode: percentile
+  percentile_low: 1.0
+  percentile_high: 99.0
+  split:
+    use_predefined: true
+    group_col: split_group
+    seed: 42
+    train_frac: 0.7
+    val_frac: 0.15
+    test_frac: 0.15
+
+loader:
+  batch_size: 64
+  num_workers: 0
+
+evaluation:
+  split: test
+  threshold: 0.5
+  corruption:
+    name:
+    severity: 0

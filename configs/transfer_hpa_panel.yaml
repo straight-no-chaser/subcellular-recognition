@@ -1,0 +1,48 @@
+experiment:
+  name: transfer_hpa_panel
+  output_root: results
+  seed: 42
+
+data:
+  manifest_paths:
+    - data/metadata/hpa_patches.csv
+    - data/metadata/allen_cell_patches.csv
+  image_size: 128
+  input_channels: 1
+  crop_mode: center
+  normalize_mode: percentile
+  percentile_low: 1.0
+  percentile_high: 99.0
+  exclude_quality_flags:
+    - low_signal
+  split:
+    use_predefined: true
+    group_col: split_group
+    seed: 42
+    train_frac: 0.7
+    val_frac: 0.15
+    test_frac: 0.15
+
+loader:
+  batch_size: 64
+  num_workers: 0
+
+evaluation:
+  threshold: 0.5
+
+sweep:
+  metric: auroc
+  split: test
+  sources:
+    - hpa
+    - allen_cell
+  test_organelles:
+    - mito
+    - golgi
+    - er
+    - nucleus
+  runs:
+    - train_organelle: mito
+      ckpt: results/train_hpa_mito_resnet18_example/best.pt
+    - train_organelle: golgi
+      ckpt: results/train_hpa_golgi_efficientnet_example/best.pt
